@@ -85,4 +85,24 @@ Docker image requires at least 2GB free for Chromium installation
 
 Allure version: 2.27.0
 
-Python version: 3.12
+Python version: 3.
+
+
+5. Run Tests Locally (headful mode)
+
+This will open Chromium and display all steps in real-time:
+
+behave features/ -f allure_behave.formatter:AllureFormatter -o reports/allure-results
+
+
+Then generate and view Allure report:
+
+allure generate reports/allure-results -o reports/allure-report --clean
+allure open reports/allure-report
+
+
+Browser runs with headless=False (visible)
+
+Screenshots are taken on failed steps
+
+Perfect for debugging or observing test flow
