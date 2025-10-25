@@ -1,0 +1,11 @@
+
+behave>=1.2.6
+pytest>=8.3.3
+pytest-html>=4.1.1
+pytest-bdd>=7.2.0
+playwright>=1.48.0
+pytest-playwright>=0.5.2
+allure-behave>=2.13.5
+allure-pytest>=2.13.5
+colorama>=0.4.6
+rich>=13.9.2

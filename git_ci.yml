@@ -1,0 +1,66 @@
+name: CI Tests
+
+on:
+  push:
+    branches:
+      - main
+      - develop
+  workflow_dispatch: 
+
+env:
+  DOCKER_IMAGE: demoqa-tests
+  REPORTS_DIR: /app/reports/allure-results
+  REPORT_DIR: /app/reports/allure-report
+
+jobs:
+  regression:
+    name: Regression Tests
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        feature:
+          - features/web_table.feature
+          - features/book_login.feature
+          - features/form.feature
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Build Docker image
+        run: docker build -t $DOCKER_IMAGE .
+
+      - name: Run feature ${{ matrix.feature }} in Docker
+        run: |
+          docker run --rm -v ${{ github.workspace }}/reports:/app/reports $DOCKER_IMAGE bash -c "rm -rf $REPORTS_DIR/* $REPORT_DIR/* && behave ${{ matrix.feature }} -f allure_behave.formatter:AllureFormatter -o $REPORTS_DIR && allure generate $REPORTS_DIR -o $REPORT_DIR --clean"
+
+      - name: Upload Allure Report
+        uses: actions/upload-artifact@v3
+        with:
+          name: allure-report-${{ matrix.feature }}
+          path: reports/allure-report
+
+  release:
+    name: Release All Features
+    needs: regression
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main'
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Build Docker image
+        run: docker build -t $DOCKER_IMAGE .
+
+      - name: Run all features in Docker
+        run: |
+          docker run --rm -v ${{ github.workspace }}/reports:/app/reports $DOCKER_IMAGE bash -c "rm -rf $REPORTS_DIR/* $REPORT_DIR/* && \
+          behave features/web_table.feature -f allure_behave.formatter:AllureFormatter -o $REPORTS_DIR && \
+          behave features/book_login.feature -f allure_behave.formatter:AllureFormatter -o $REPORTS_DIR && \
+          behave features/form.feature -f allure_behave.formatter:AllureFormatter -o $REPORTS_DIR && \
+          allure generate $REPORTS_DIR -o $REPORT_DIR --clean"
+
+      - name: Upload Allure Report
+        uses: actions/upload-artifact@v3
+        with:
+          name: allure-report
+          path: reports/allure-report
